@@ -114,16 +114,16 @@ func ValidateDealProposal(ctx fsm.Context, environment ProviderDealEnvironment, 
 		return ctx.Trigger(storagemarket.ProviderEventDealRejected, xerrors.Errorf("proposed provider collateral above maximum: %s > %s", proposal.ProviderCollateral, pcMax))
 	}
 
-	askPrice := environment.Ask().Price
-	if deal.Proposal.VerifiedDeal {
-		askPrice = environment.Ask().VerifiedPrice
-	}
+	//askPrice := environment.Ask().Price
+	//if deal.Proposal.VerifiedDeal {
+	//	askPrice = environment.Ask().VerifiedPrice
+	//}
 
-	minPrice := big.Div(big.Mul(askPrice, abi.NewTokenAmount(int64(proposal.PieceSize))), abi.NewTokenAmount(1<<30))
-	if proposal.StoragePricePerEpoch.LessThan(minPrice) {
-		return ctx.Trigger(storagemarket.ProviderEventDealRejected,
-			xerrors.Errorf("storage price per epoch less than asking price: %s < %s", proposal.StoragePricePerEpoch, minPrice))
-	}
+	//minPrice := big.Div(big.Mul(askPrice, abi.NewTokenAmount(int64(proposal.PieceSize))), abi.NewTokenAmount(1<<30))
+	//if proposal.StoragePricePerEpoch.LessThan(minPrice) {
+	//	return ctx.Trigger(storagemarket.ProviderEventDealRejected,
+	//		xerrors.Errorf("storage price per epoch less than asking price: %s < %s", proposal.StoragePricePerEpoch, minPrice))
+	//}
 
 	if proposal.PieceSize < environment.Ask().MinPieceSize {
 		return ctx.Trigger(storagemarket.ProviderEventDealRejected,

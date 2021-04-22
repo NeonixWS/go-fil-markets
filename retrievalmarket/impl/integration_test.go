@@ -103,12 +103,12 @@ func requireSetupTestClientAndProvider(ctx context.Context, t *testing.T, payChA
 
 	gs1 := graphsyncimpl.New(ctx, network.NewFromLibp2pHost(testData.Host1), testData.Loader1, testData.Storer1)
 	dtTransport1 := dtgstransport.NewTransport(testData.Host1.ID(), gs1)
-	dt1, err := dtimpl.NewDataTransfer(testData.DTStore1, testData.DTTmpDir1, testData.DTNet1, dtTransport1, testData.DTStoredCounter1)
+	dt1, err := dtimpl.NewDataTransfer(testData.DTStore1, testData.DTTmpDir1, testData.DTNet1, dtTransport1)
 	require.NoError(t, err)
 	testutil.StartAndWaitForReady(ctx, t, dt1)
 	require.NoError(t, err)
 	clientDs := namespace.Wrap(testData.Ds1, datastore.NewKey("/retrievals/client"))
-	client, err := retrievalimpl.NewClient(nw1, testData.MultiStore1, dt1, rcNode1, &tut.TestPeerResolver{}, clientDs, testData.RetrievalStoredCounter1)
+	client, err := retrievalimpl.NewClient(nw1, testData.MultiStore1, dt1, rcNode1, &tut.TestPeerResolver{}, clientDs)
 	require.NoError(t, err)
 	tut.StartAndWaitForReady(ctx, t, client)
 	nw2 := rmnet.NewFromLibp2pHost(testData.Host2, rmnet.RetryParameters(0, 0, 0, 0))
@@ -143,7 +143,7 @@ func requireSetupTestClientAndProvider(ctx context.Context, t *testing.T, payChA
 
 	gs2 := graphsyncimpl.New(ctx, network.NewFromLibp2pHost(testData.Host2), testData.Loader2, testData.Storer2)
 	dtTransport2 := dtgstransport.NewTransport(testData.Host2.ID(), gs2)
-	dt2, err := dtimpl.NewDataTransfer(testData.DTStore2, testData.DTTmpDir2, testData.DTNet2, dtTransport2, testData.DTStoredCounter2)
+	dt2, err := dtimpl.NewDataTransfer(testData.DTStore2, testData.DTTmpDir2, testData.DTNet2, dtTransport2)
 	require.NoError(t, err)
 	testutil.StartAndWaitForReady(ctx, t, dt2)
 	require.NoError(t, err)
@@ -497,8 +497,7 @@ CurrentInterval: %d
 				clientStoreID = &id
 			}
 			// *** Retrieve the piece
-			did, err := client.Retrieve(bgCtx, payloadCID, rmParams, expectedTotal, retrievalPeer, clientPaymentChannel, retrievalPeer.Address, clientStoreID)
-			assert.Equal(t, did, retrievalmarket.DealID(0))
+			_, err = client.Retrieve(bgCtx, payloadCID, rmParams, expectedTotal, retrievalPeer, clientPaymentChannel, retrievalPeer.Address, clientStoreID)
 			require.NoError(t, err)
 
 			// verify that client subscribers will be notified of state changes
@@ -509,9 +508,7 @@ CurrentInterval: %d
 				t.FailNow()
 			case clientDealState = <-clientDealStateChan:
 			}
-			if testCase.failsUnseal {
-				assert.Equal(t, retrievalmarket.DealStatusErrored, clientDealState.Status)
-			} else if testCase.cancelled {
+			if testCase.failsUnseal || testCase.cancelled {
 				assert.Equal(t, retrievalmarket.DealStatusCancelled, clientDealState.Status)
 			} else {
 				if !testCase.zeroPricePerByte {
@@ -611,13 +608,13 @@ func setupClient(
 
 	gs1 := graphsyncimpl.New(ctx, network.NewFromLibp2pHost(testData.Host1), testData.Loader1, testData.Storer1)
 	dtTransport1 := dtgstransport.NewTransport(testData.Host1.ID(), gs1)
-	dt1, err := dtimpl.NewDataTransfer(testData.DTStore1, testData.DTTmpDir1, testData.DTNet1, dtTransport1, testData.DTStoredCounter1)
+	dt1, err := dtimpl.NewDataTransfer(testData.DTStore1, testData.DTTmpDir1, testData.DTNet1, dtTransport1)
 	require.NoError(t, err)
 	testutil.StartAndWaitForReady(ctx, t, dt1)
 	require.NoError(t, err)
 	clientDs := namespace.Wrap(testData.Ds1, datastore.NewKey("/retrievals/client"))
 
-	client, err := retrievalimpl.NewClient(nw1, testData.MultiStore1, dt1, clientNode, &tut.TestPeerResolver{}, clientDs, testData.RetrievalStoredCounter1)
+	client, err := retrievalimpl.NewClient(nw1, testData.MultiStore1, dt1, clientNode, &tut.TestPeerResolver{}, clientDs)
 	return &createdChan, &newLaneAddr, &createdVoucher, clientNode, client, err
 }
 
@@ -648,7 +645,7 @@ func setupProvider(
 
 	gs2 := graphsyncimpl.New(ctx, network.NewFromLibp2pHost(testData.Host2), testData.Loader2, testData.Storer2)
 	dtTransport2 := dtgstransport.NewTransport(testData.Host2.ID(), gs2)
-	dt2, err := dtimpl.NewDataTransfer(testData.DTStore2, testData.DTTmpDir2, testData.DTNet2, dtTransport2, testData.DTStoredCounter2)
+	dt2, err := dtimpl.NewDataTransfer(testData.DTStore2, testData.DTTmpDir2, testData.DTNet2, dtTransport2)
 	require.NoError(t, err)
 	testutil.StartAndWaitForReady(ctx, t, dt2)
 	require.NoError(t, err)
